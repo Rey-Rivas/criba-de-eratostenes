@@ -1,26 +1,26 @@
 #include <iostream>
 #include <vector>
 #include <cmath>
-#include <chrono>
+#include <omp.h>
 
-void cribaDeEratostenes(unsigned long long n) {
+void cribaDeEratostenesParalela(unsigned long long n) {
     // Crear un vector booleano para números hasta n
     std::vector<bool> esPrimo(n + 1, true);
 
     // Eliminar el 0 y el 1, que no son primos
     esPrimo[0] = esPrimo[1] = false;
 
-    // Algoritmo de la criba de Eratóstenes
+    // Algoritmo de la criba de Eratóstenes con OpenMP
+    #pragma omp parallel for schedule(dynamic)
     for (unsigned long long p = 2; p * p <= n; ++p) {
         if (esPrimo[p]) {
-            // Marcar los múltiplos de p como no primos
             for (unsigned long long i = p * p; i <= n; i += p) {
                 esPrimo[i] = false;
             }
         }
     }
 
-    // Imprimir todos los números primos menores o iguales a n
+    // Imprimir los números primos (si lo deseas, puedes descomentar esta parte)
     /*std::cout << "Números primos menores o iguales a " << n << ": ";
     for (unsigned long long p = 2; p <= n; ++p) {
         if (esPrimo[p]) {
@@ -43,12 +43,12 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    auto inicio = std::chrono::high_resolution_clock::now();
-    cribaDeEratostenes(n);
-    auto fin = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> duracion = fin - inicio;
+    // Medir tiempo usando OpenMP
+    double inicio = omp_get_wtime();
+    cribaDeEratostenesParalela(n);
+    double fin = omp_get_wtime();
 
-    std::cout << "Tiempo de ejecución: " << duracion.count() << " segundos" << std::endl;
+    std::cout << "Tiempo de ejecución: " << (fin - inicio) << " segundos" << std::endl;
 
     return 0;
 }
