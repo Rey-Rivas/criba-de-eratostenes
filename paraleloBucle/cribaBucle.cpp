@@ -3,14 +3,13 @@
 #include <cmath>
 #include <omp.h>
 
-void cribaDeEratostenes(unsigned long long n) {
-    // Crear un vector booleano para números hasta n
-    std::vector<bool> esPrimo(n + 1, true);
+// Función que ejecuta la criba de Eratóstenes
+void cribaDeEratostenes(unsigned long long n, std::vector<bool>& esPrimo) {
+    esPrimo.assign(n + 1, true);
 
     // Eliminar el 0 y el 1, que no son primos
     esPrimo[0] = esPrimo[1] = false;
 
-    // Algoritmo de la criba de Eratóstenes con paralelización
     unsigned long long limite = std::sqrt(n);
 
     for (unsigned long long p = 2; p <= limite; ++p) {
@@ -22,33 +21,56 @@ void cribaDeEratostenes(unsigned long long n) {
             }
         }
     }
+}
 
-    // Imprimir todos los números primos menores o iguales a n (comentado para evitar ralentizaciones)
-    /*std::cout << "Números primos menores o iguales a " << n << ": ";
-    for (unsigned long long p = 2; p <= n; ++p) {
+// Función para imprimir números primos
+void imprimirPrimos(const std::vector<bool>& esPrimo) {
+    std::cout << "Números primos: ";
+    for (size_t p = 2; p < esPrimo.size(); ++p) {
         if (esPrimo[p]) {
             std::cout << p << " ";
         }
     }
-    std::cout << std::endl;*/
+    std::cout << std::endl;
 }
 
 int main(int argc, char* argv[]) {
-    if (argc != 2) {
-        std::cerr << "Uso: " << argv[0] << " <n>" << std::endl;
+    if (argc != 3) {
+        std::cerr << "Uso: " << argv[0] << " <n> <num_hilos>" << std::endl;
         return 1;
     }
 
-    unsigned long long n = std::stoull(argv[1]);
+    unsigned long long n;
+    int numHilos;
+
+    try {
+        n = std::stoull(argv[1]);
+        numHilos = std::stoi(argv[2]);
+    } catch (const std::exception& e) {
+        std::cerr << "Error: los argumentos deben ser un número entero válido." << std::endl;
+        return 1;
+    }
 
     if (n < 2) {
         std::cerr << "El valor de n debe ser mayor o igual a 2." << std::endl;
         return 1;
     }
 
+    if (numHilos < 1) {
+        std::cerr << "El número de hilos debe ser mayor o igual a 1." << std::endl;
+        return 1;
+    }
+
+    // Configurar el número de hilos en OpenMP
+    omp_set_num_threads(numHilos);
+
+    std::vector<bool> esPrimo;
+
     double inicio = omp_get_wtime(); // Inicio del cronómetro
-    cribaDeEratostenes(n);
+    cribaDeEratostenes(n, esPrimo);
     double fin = omp_get_wtime();   // Fin del cronómetro
+
+    //imprimirPrimos(esPrimo);
 
     std::cout << "Tiempo de ejecución: " << (fin - inicio) << " segundos" << std::endl;
 

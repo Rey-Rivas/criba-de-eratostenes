@@ -3,9 +3,20 @@
 #include <cmath>
 #include <omp.h>
 
-void cribaDeEratostenesParalela(unsigned long long n) {
+// Función para imprimir los números primos
+void imprimirPrimos(const std::vector<bool>& esPrimo) {
+    std::cout << "Números primos encontrados: ";
+    for (size_t i = 2; i < esPrimo.size(); ++i) {
+        if (esPrimo[i]) {
+            std::cout << i << " ";
+        }
+    }
+    std::cout << std::endl;
+}
+
+void cribaDeEratostenesParalela(unsigned long long n, std::vector<bool>& esPrimo) {
     // Crear un vector booleano para números hasta n
-    std::vector<bool> esPrimo(n + 1, true);
+    esPrimo.assign(n + 1, true);
 
     // Eliminar el 0 y el 1, que no son primos
     esPrimo[0] = esPrimo[1] = false;
@@ -15,7 +26,6 @@ void cribaDeEratostenesParalela(unsigned long long n) {
     // Criba inicial: marcar múltiplos de primos hasta √n
     #pragma omp parallel
     {
-        // Compartir el cálculo de los primos base hasta √n
         #pragma omp for schedule(dynamic)
         for (unsigned long long p = 2; p <= raiz; ++p) {
             if (esPrimo[p]) {
@@ -39,38 +49,40 @@ void cribaDeEratostenesParalela(unsigned long long n) {
             }
         }
     }
-
-    // Opcional: imprimir los números primos
-    /*
-    std::cout << "Números primos menores o iguales a " << n << ": ";
-    for (unsigned long long p = 2; p <= n; ++p) {
-        if (esPrimo[p]) {
-            std::cout << p << " ";
-        }
-    }
-    std::cout << std::endl;
-    */
 }
 
 int main(int argc, char* argv[]) {
-    if (argc != 2) {
-        std::cerr << "Uso: " << argv[0] << " <n>" << std::endl;
+    if (argc != 3) {
+        std::cerr << "Uso: " << argv[0] << " <n> <num_hilos>" << std::endl;
         return 1;
     }
 
     unsigned long long n = std::stoull(argv[1]);
+    int numHilos = std::stoi(argv[2]);
 
     if (n < 2) {
         std::cerr << "El valor de n debe ser mayor o igual a 2." << std::endl;
         return 1;
     }
 
+    if (numHilos < 1) {
+        std::cerr << "El número de hilos debe ser mayor o igual a 1." << std::endl;
+        return 1;
+    }
+
+    // Configurar el número de hilos
+    omp_set_num_threads(numHilos);
+
     // Medir el tiempo de ejecución usando omp_get_wtime
     double inicio = omp_get_wtime();
-    cribaDeEratostenesParalela(n);
+    std::vector<bool> esPrimo;
+    cribaDeEratostenesParalela(n, esPrimo);
     double fin = omp_get_wtime();
 
     std::cout << "Tiempo de ejecución: " << (fin - inicio) << " segundos" << std::endl;
+
+    // Imprimir los números primos
+    //imprimirPrimos(esPrimo);
 
     return 0;
 }
